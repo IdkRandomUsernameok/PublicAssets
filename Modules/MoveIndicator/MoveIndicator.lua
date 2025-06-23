@@ -35,17 +35,24 @@ type Page = {Page: typeof(Guis.Page), List: {typeof(Guis.Template)}}
 type Data = {MoveUi: typeof(Guis.Ui), Data: Types.TypeData, Pages: {Page}, Page: number, Connection: RBXScriptConnection?}
 type MoveIndicator = typeof( setmetatable({}:: Data, {}:: typeof(MoveIndicator)) )
 
-function MoveIndicator.New(Type: string): MoveIndicator
+function MoveIndicator.New(Type: string | {Modes: any}): MoveIndicator
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui", 5)
 	if not PlayerGui then
 		error("No PlayerGui found!")
 	end
 
-	local TypeData = Data[Type]
-	if not TypeData then
-		error("This type lacks move indicator data")
+	local TypeData
+	if typeof(Type) == "string" then
+		TypeData = Data[Type]
+		if not TypeData then
+			error("This type lacks move indicator data")
+		end
+	elseif typeof(Type) == "table" and Type.Modes then
+		TypeData = Type
+	else
+		error("Expected string (for predefined type) or table (custom type with Modes)")
 	end
-
+	
 	local MoveUi = Guis.Ui:Clone()
 	if game:GetService("UserInputService").TouchEnabled then
 		local frame = MoveUi:FindFirstChildWhichIsA("Frame")
