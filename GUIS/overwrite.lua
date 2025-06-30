@@ -1865,10 +1865,11 @@ local function C_58()
 		Poison = 0,
 		RunSpeed = 0,
 		WalkSpeed = 0,
-		UnLock = false
+		UnLock = false,
+		Blocking = false
 	}
 
-	local ActTypes = {"KILL"}
+	local ActTypes = {"KILL","CRASH"}
 
 	local AutofillValueDic = {
 		["number"] = {
