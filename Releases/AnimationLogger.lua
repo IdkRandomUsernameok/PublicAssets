@@ -1,3 +1,5 @@
+---@diagnostic disable: undefined-global
+
 -------------------------------------------------------------------------------------------------------------------------------
 -- Animation Logger
 -- Originally by: Irfannnnn (he vibe coded it) 
@@ -6,9 +8,9 @@
 -- Export Menu
 -- Import Menu
 -- Importing/Exporting KeyframeSequences now wrap them all
--- into one rbxm file to save space since when
--- Importing/Exporting each keyframesequence would
--- come with a readme file from the universalsynsaveinstance
+-- into one rbxm file to save space
+-- basic anti detection
+-- swapped to a better saveinstance
 --
 -- Notice:
 -- YOU CAN ONLY EXPORT IDS IN THE GAME YOU ORIGINALLY
@@ -17,102 +19,22 @@
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
-local players = game:GetService("Players")
-local marketplaceservice = game:GetService("MarketplaceService")
+local cloneref = cloneref or function(x) return x end
+local TweenService = cloneref(game:GetService("TweenService"))
+local players = cloneref(game:GetService("Players"))
+local marketplaceservice = cloneref(game:GetService("MarketplaceService"))
+local CoreGui = cloneref(game:GetService("CoreGui"))
 local localplayer = players.LocalPlayer
+local gethui = get_hidden_ui or gethui or function() return CoreGui end
 
-local disabledAnimations = {
-	["WalkAnim"] = true,
-	["JumpAnim"] = true,
-	["RunAnim"] = true,
-	["SwimAnim"] = true,
-	["IdleAnim"] = true,
-	["FallAnim"] = true,
-	["SwimIdleAnim"] = true,
-	["ClimbAnim"] = true,
-}
-
-local dw = {
-	[16116270224] = true,
-	[16552821455] = true,
-	[18984416148] = true
-}
-
-local indw = dw[game.GameId] or false
-
-local gameName = "Unknown"
-pcall(function()
-	gameName = marketplaceservice:GetProductInfo(game.PlaceId).Name
-end)
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "AnimationLogger"
-gui.Parent = gethui and gethui() or game:GetService("CoreGui")
-gui.ResetOnSpawn = false
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 250)
-frame.Position = UDim2.new(0.35, 0, 0.3, 0)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
-frame.Parent = gui
-
-local topbar = Instance.new("Frame")
-topbar.Size = UDim2.new(1, 0, 0, 30)
-topbar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-topbar.BorderSizePixel = 0
-topbar.Parent = frame
-
-local titlelabel = Instance.new("TextLabel")
-titlelabel.Size = UDim2.new(1, -250, 1, 0)
-titlelabel.BackgroundTransparency = 1
-titlelabel.Text = " Animation Logger"
-titlelabel.Font = Enum.Font.RobotoMono
-titlelabel.TextXAlignment = Enum.TextXAlignment.Left
-titlelabel.TextColor3 = Color3.new(1, 1, 1)
-titlelabel.TextSize = 18
-titlelabel.Parent = topbar
-
-local function createbutton(name, position, size, color, text)
-	local button = Instance.new("TextButton")
-	button.Name = name
-	button.Size = size
-	button.Position = position
-	button.BackgroundColor3 = color
-	button.Text = text
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.TextSize = 16
-	button.Font = Enum.Font.RobotoMono
-	button.BorderSizePixel = 0
-	button.BackgroundTransparency = 0.7
-	button.Parent = topbar
-	return button
+local function randomString()
+	local length = math.random(10,20)
+	local array = {}
+	for i = 1, length do
+		array[i] = string.char(math.random(32, 126))
+	end
+	return table.concat(array)
 end
-
-local exportbutton   = createbutton("ExportButton", UDim2.new(1, -186, 0, 5), UDim2.new(0, 60, 0, 20), Color3.fromRGB(60, 150, 60), "Export")
-local importbutton   = createbutton("ImportButton", UDim2.new(1, -255, 0, 5), UDim2.new(0, 60, 0, 20), Color3.fromRGB(0, 102, 255), "Import")
-local clearbutton    = createbutton("ClearButton",  UDim2.new(1, -116, 0, 5), UDim2.new(0, 60, 0, 20), Color3.fromRGB(200, 50, 50), "Clear")
-local minimizebutton = createbutton("MinimizeButton", UDim2.new(1, -51, 0, 5), UDim2.new(0, 20, 0, 20), Color3.fromRGB(50, 50, 200), "–")
-local xbutton        = createbutton("CloseButton", UDim2.new(1, -25, 0, 5), UDim2.new(0, 20, 0, 20), Color3.fromRGB(200, 50, 50), "X")
-
-local scrollframe = Instance.new("ScrollingFrame")
-scrollframe.Size = UDim2.new(1, -10, 1, -40)
-scrollframe.Position = UDim2.new(0, 5, 0, 35)
-scrollframe.CanvasSize = UDim2.new(0, 0, 0, 0)
-scrollframe.ScrollBarThickness = 5
-scrollframe.BorderSizePixel = 0
-scrollframe.BackgroundTransparency = 1
-scrollframe.Parent = frame
-
-local loglayout = Instance.new("UIListLayout")
-loglayout.Padding = UDim.new(0, 5)
-loglayout.Parent = scrollframe
-
-loglayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scrollframe.CanvasSize = UDim2.new(0, 0, 0, loglayout.AbsoluteContentSize.Y)
-end)
 
 local function clik()
 	local s = Instance.new("Sound") 
@@ -144,7 +66,109 @@ local function getAnimationInfo(assetid)
 	return { Name = "Unknown", Creator = { Name = "Unknown" }, IsPublicDomain = false }
 end
 
+local disabledAnimations = {
+	["WalkAnim"] = true, ["JumpAnim"] = true, ["RunAnim"] = true,
+	["SwimAnim"] = true, ["IdleAnim"] = true, ["FallAnim"] = true,
+	["SwimIdleAnim"] = true, ["ClimbAnim"] = true,
+}
+
+local gameName = "Unknown"
+pcall(function()
+	gameName = marketplaceservice:GetProductInfo(game.PlaceId).Name
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = randomString()
+gui.Parent = gethui()
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 400, 0, 250)
+frame.Position = UDim2.new(0.35, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+local topbar = Instance.new("Frame")
+topbar.Size = UDim2.new(1, 0, 0, 30)
+topbar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+topbar.BorderSizePixel = 0
+topbar.Parent = frame
+
+local titlelabel = Instance.new("TextLabel")
+titlelabel.Size = UDim2.new(1, -250, 1, 0)
+titlelabel.BackgroundTransparency = 1
+titlelabel.Text = " Animation Logger"
+titlelabel.Font = Enum.Font.RobotoMono
+titlelabel.TextXAlignment = Enum.TextXAlignment.Left
+titlelabel.TextColor3 = Color3.new(1, 1, 1)
+titlelabel.TextSize = 18
+titlelabel.Parent = topbar
+
+local function createbutton(position, size, color, text)
+	local button = Instance.new("TextButton")
+	button.Name = randomString()
+	button.Size = size
+	button.Position = position
+	button.BackgroundColor3 = color
+	button.Text = text
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.TextSize = 16
+	button.Font = Enum.Font.RobotoMono
+	button.BorderSizePixel = 0
+	button.BackgroundTransparency = 0.7
+	button.Parent = topbar
+	return button
+end
+
+local exportbutton = createbutton(UDim2.new(1, -186, 0, 5), UDim2.new(0, 60, 0, 20), Color3.fromRGB(60, 150, 60), "Export")
+local importbutton = createbutton(UDim2.new(1, -255, 0, 5), UDim2.new(0, 60, 0, 20), Color3.fromRGB(0, 102, 255), "Import")
+local clearbutton = createbutton(UDim2.new(1, -116, 0, 5), UDim2.new(0, 60, 0, 20), Color3.fromRGB(200, 50, 50), "Clear")
+local minimizebutton = createbutton(UDim2.new(1, -51, 0, 5), UDim2.new(0, 20, 0, 20), Color3.fromRGB(50, 50, 200), "–")
+local xbutton = createbutton(UDim2.new(1, -25, 0, 5), UDim2.new(0, 20, 0, 20), Color3.fromRGB(200, 50, 50), "X")
+
+local scrollframe = Instance.new("ScrollingFrame")
+scrollframe.Size = UDim2.new(1, -10, 1, -40)
+scrollframe.Position = UDim2.new(0, 5, 0, 35)
+scrollframe.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollframe.ScrollBarThickness = 5
+scrollframe.BorderSizePixel = 0
+scrollframe.BackgroundTransparency = 1
+scrollframe.Parent = frame
+
+local loglayout = Instance.new("UIListLayout")
+loglayout.Padding = UDim.new(0, 5)
+loglayout.Parent = scrollframe
+loglayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	scrollframe.CanvasSize = UDim2.new(0, 0, 0, loglayout.AbsoluteContentSize.Y)
+end)
+
+local function tweenGui(guiObject, properties, duration, style, direction)
+	local info = TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out)
+	local tween = TweenService:Create(guiObject, info, properties)
+	tween:Play()
+	return tween
+end
+
 local loggedanimations = {}
+
+local function animateLogEntry(entry)
+	entry.Position = UDim2.new(0, -400, entry.Position.Y.Scale, entry.Position.Y.Offset)
+	entry.BackgroundTransparency = 1
+	for _, child in ipairs(entry:GetChildren()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") then
+			child.TextTransparency = 1
+		end
+	end
+	tweenGui(entry, {Position = UDim2.new(0, 10, entry.Position.Y.Scale, entry.Position.Y.Offset), BackgroundTransparency = 0}, 0.4)
+	for _, child in ipairs(entry:GetChildren()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") then
+			tweenGui(child, {TextTransparency = 0}, 0.4)
+		end
+	end
+end
 
 local function createlogentry(animationname, animationid, source)
 	local displayid = extractanimationid(animationid)
@@ -244,16 +268,18 @@ local function createlogentry(animationname, animationid, source)
 		end
 	end
 
-	copyidbutton.MouseButton1Click:Connect(function() copyToClipboard(displayid,copyidbutton) end)
-	copynamebutton.MouseButton1Click:Connect(function() copyToClipboard(info.Name,copynamebutton) end)
-	copyurlbutton.MouseButton1Click(function() copyToClipboard("https://www.roblox.com/library/"..displayid,copyurlbutton) end)
+	copyidbutton.MouseButton1Click:Connect(function() copyToClipboard(displayid, copyidbutton) end)
+	copynamebutton.MouseButton1Click:Connect(function() copyToClipboard(info.Name, copynamebutton) end)
+	copyurlbutton.MouseButton1Click:Connect(function() copyToClipboard("https://www.roblox.com/library/"..displayid, copyurlbutton) end)
 
 	removebutton.MouseButton1Click:Connect(function()
 		clik()
 		loggedanimations[animationid]=nil
-		entryframe:Destroy()
+		tweenGui(entryframe, {Size = UDim2.new(entryframe.Size.X.Scale, entryframe.Size.X.Offset, 0, 0), BackgroundTransparency = 1}, 0.25)
+		task.delay(0.25, function() entryframe:Destroy() end)
 	end)
 
+	animateLogEntry(entryframe)
 	return entryframe
 end
 
@@ -266,7 +292,6 @@ local function loganimation(animationname, animationid, source)
 end
 
 local function trackanimationplaying(humanoid)
-	if indw then return end
 	humanoid.AnimationPlayed:Connect(function(track)
 		if track and track.Animation then
 			loganimation(track.Animation.Name, track.Animation.AnimationId, "Played Animation")
@@ -288,12 +313,8 @@ local function setupcharacter(character)
 	trackanimationplaying(humanoid)
 end
 
-local function monitorcharacter()
-	localplayer.CharacterAdded:Connect(setupcharacter)
-	if localplayer.Character then setupcharacter(localplayer.Character) end
-end
-
-monitorcharacter()
+localplayer.CharacterAdded:Connect(setupcharacter)
+if localplayer.Character then setupcharacter(localplayer.Character) end
 
 local exportdropdown = Instance.new("Frame")
 exportdropdown.Size=UDim2.new(0,120,0,60)
@@ -321,72 +342,16 @@ local exportIDsBtn=makeExportOption("Export IDs",0)
 local exportKFBtn=makeExportOption("Export Keyframes",30)
 
 local Params = {
-	RepoURL = "https://raw.githubusercontent.com/luau/UniversalSynSaveInstance/main/",
+	RepoURL = "https://raw.githubusercontent.com/Devraj2010isme/BetterSaveinstance/refs/heads/main/",
 	SSI = "saveinstance",
 }
 
-local synsaveinstance = loadstring(
-	game:HttpGet(Params.RepoURL .. Params.SSI .. ".luau", true),
-	Params.SSI
-)()
+local synsaveinstance = loadstring(game:HttpGet(Params.RepoURL .. Params.SSI .. ".luau", true), Params.SSI)()
 
-local function exportIDs()
-	local base="AnimationExports"
-	local gameFolder=base.."/"..sanitize(gameName)
-	ensureFolder(base)
-	ensureFolder(gameFolder)
-
-	local path = gameFolder.."/animation_ids.txt"
-	local out = {}
-	if isfile(path) then
-		for line in readfile(path):gmatch("[^\r\n]+") do
-			table.insert(out,line)
-		end
-	end
-
-	for id in pairs(loggedanimations) do
-		local clean = extractanimationid(id)
-		local info = getAnimationInfo(tonumber(clean))
-		table.insert(out,string.format('"%s" -- %s', clean, info.Name))
-	end
-	writefile(path, table.concat(out,"\n"))
-end
-
-local function exportKeyframes()
-	local base = "AnimationExports"
-	local gameFolder = base .. "/" .. sanitize(gameName)
-	local kfFolder = gameFolder .. "/exported-keyframes"
-	ensureFolder(base)
-	ensureFolder(gameFolder)
-	ensureFolder(kfFolder)
-
-	local containerFolder = Instance.new("Folder")
-	containerFolder.Name = ""
-
-	for id in pairs(loggedanimations) do
-		local clean = extractanimationid(id)
-		local numeric = tonumber(clean)
-		if not numeric then continue end
-
-		local ok, obj = pcall(function()
-			return game:GetObjects("rbxassetid://" .. clean)[1]
-		end)
-		if not ok or not obj or not obj:IsA("KeyframeSequence") then continue end
-
-		obj.Parent = containerFolder
-	end
-
-	local outputData
-	synsaveinstance({
-		Object = containerFolder,
-		Callback = function(data) outputData = data end,
-		__DEBUG_MODE = true,
-		mode = "full",
-		SaveBytecode = false
-	})
-	if outputData then
-		writefile(kfFolder .. "/output.rbxm", outputData)
-	end
+local function animateImportFrame(frame)
+	frame.Visible = true
+	frame.BackgroundTransparency = 1
+	tweenGui(frame, {BackgroundTransparency = 0}, 0.3)
 end
 
 local importFrame = Instance.new("Frame")
@@ -423,79 +388,58 @@ doImportBtn.Parent = importFrame
 
 importbutton.MouseButton1Click:Connect(function()
 	clik()
-	importFrame.Visible = not importFrame.Visible
+	if importFrame.Visible then
+		importFrame.Visible = false
+	else
+		animateImportFrame(importFrame)
+	end
 end)
 
-local function importKeyframesFromText(text)
-	local lines = {}
-	for line in text:gmatch("[^\r\n]+") do
-		local id = line:match("(%d+)")
-		if id then table.insert(lines, id) end
-	end
-
-	if #lines == 0 then
-		warn("No valid animation IDs found in import box")
-		return
-	end
-
-	local containerFolder = Instance.new("Folder")
-	containerFolder.Name = ""
-
-	for _, animId in ipairs(lines) do
-		local clean = extractanimationid(animId)
-		local numeric = tonumber(clean)
-		if not numeric then continue end
-
-		local ok, obj = pcall(function()
-			return game:GetObjects("rbxassetid://" .. clean)[1]
-		end)
-		if not ok or not obj or not obj:IsA("KeyframeSequence") then continue end
-
-		obj.Parent = containerFolder
-		local info = getAnimationInfo(numeric)
-		loganimation(info.Name, clean, "Imported")
-	end
-
-	local base = "AnimationExports"
-	local gameFolder = base .. "/" .. sanitize(gameName)
-	local kfFolder = gameFolder .. "/exported-keyframes"
-	ensureFolder(base)
-	ensureFolder(gameFolder)
-	ensureFolder(kfFolder)
-
-	local outputData
-	synsaveinstance({
-		Object = containerFolder,
-		Callback = function(data) outputData = data end,
-		__DEBUG_MODE = true,
-		mode = "full",
-		SaveBytecode = false
-	})
-	if outputData then
-		writefile(kfFolder .. "/output.rbxm", outputData)
-	end
-end
-
-
-doImportBtn.MouseButton1Click:Connect(function()
+exportbutton.MouseButton1Click:Connect(function()
 	clik()
-	importKeyframesFromText(importBox.Text)
+	if exportdropdown.Visible then
+		exportdropdown.Visible = false
+	else
+		exportdropdown.Visible = true
+	end
 end)
-
-exportbutton.MouseButton1Click:Connect(function() clik() exportdropdown.Visible = not exportdropdown.Visible end)
-exportIDsBtn.MouseButton1Click:Connect(function() clik() exportdropdown.Visible=false exportIDs() end)
-exportKFBtn.MouseButton1Click:Connect(function() clik() exportdropdown.Visible=false exportKeyframes() end)
 
 clearbutton.MouseButton1Click:Connect(function()
 	clik()
 	loggedanimations={}
 	for _,v in ipairs(scrollframe:GetChildren()) do
-		if v:IsA("Frame") then v:Destroy() end
+		if v:IsA("Frame") then
+			v:Destroy()
+		end
 	end
-	scrollframe.CanvasSize=UDim2.new(0,0,0,0)
+	scrollframe.CanvasSize = UDim2.new(0,0,0,0)
 end)
 
 xbutton.MouseButton1Click:Connect(function()
 	clik()
 	gui:Destroy()
+end)
+
+local minimized = false
+local oldSize = frame.Size
+minimizebutton.MouseButton1Click:Connect(function()
+	clik()
+	minimized = not minimized
+	if minimized then
+		for _, child in ipairs(frame:GetChildren()) do
+			if child ~= topbar then
+				child.Visible = false
+			end
+		end
+		tweenGui(frame, {Size = UDim2.new(oldSize.X.Scale, oldSize.X.Offset, 0, 30)}, 0.25)
+		minimizebutton.Text = "+"
+	else
+		for _, child in ipairs(frame:GetChildren()) do
+			if child ~= topbar then
+				child.Visible = true
+			end
+		end
+		tweenGui(frame, {Size = oldSize}, 0.25)
+		minimizebutton.Text = "–"
+	end
 end)
