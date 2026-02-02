@@ -354,7 +354,8 @@ local function exportKeyframes()
 	ensureFolder(kfFolder)
 
 	local containerFolder = Instance.new("Folder")
-	containerFolder.Name = ""
+    containerFolder.Parent = gethui()
+	containerFolder.Name = randomString()
 
 	for id in pairs(loggedanimations) do
 		local clean = extractanimationid(id)
@@ -396,7 +397,8 @@ local function importKeyframesFromText(text)
 	end
 
 	local containerFolder = Instance.new("Folder")
-	containerFolder.Name = ""
+    containerFolder.Parent = gethui()
+	containerFolder.Name = randomString()
 
 	for _, animId in ipairs(lines) do
 		local clean = extractanimationid(animId)
