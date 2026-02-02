@@ -338,15 +338,128 @@ local function makeExportOption(text,y)
 	return btn
 end
 
-local exportIDsBtn=makeExportOption("Export IDs",0)
-local exportKFBtn=makeExportOption("Export Keyframes",30)
-
 local Params = {
 	RepoURL = "https://raw.githubusercontent.com/Devraj2010isme/BetterSaveinstance/refs/heads/main/",
 	SSI = "saveinstance",
 }
 
 local synsaveinstance = loadstring(game:HttpGet(Params.RepoURL .. Params.SSI .. ".luau", true), Params.SSI)()
+
+local function exportKeyframes()
+	local base = "AnimationExports"
+	local gameFolder = base .. "/" .. sanitize(gameName)
+	local kfFolder = gameFolder .. "/exported-keyframes"
+	ensureFolder(base)
+	ensureFolder(gameFolder)
+	ensureFolder(kfFolder)
+
+	local containerFolder = Instance.new("Folder")
+	containerFolder.Name = ""
+
+	for id in pairs(loggedanimations) do
+		local clean = extractanimationid(id)
+		local numeric = tonumber(clean)
+		if not numeric then continue end
+
+		local ok, obj = pcall(function()
+			return game:GetObjects("rbxassetid://" .. clean)[1]
+		end)
+		if not ok or not obj or not obj:IsA("KeyframeSequence") then continue end
+
+		obj.Parent = containerFolder
+	end
+
+	local outputData
+	synsaveinstance({
+		Object = containerFolder,
+		Callback = function(data) outputData = data end,
+		__DEBUG_MODE = true,
+		mode = "full",
+        ReadMe = false,
+		SaveBytecode = false
+	})
+	if outputData then
+		writefile(kfFolder .. "/output.rbxm", outputData)
+	end
+end
+
+local function importKeyframesFromText(text)
+	local lines = {}
+	for line in text:gmatch("[^\r\n]+") do
+		local id = line:match("(%d+)")
+		if id then table.insert(lines, id) end
+	end
+
+	if #lines == 0 then
+		warn("No valid animation IDs found in import box")
+		return
+	end
+
+	local containerFolder = Instance.new("Folder")
+	containerFolder.Name = ""
+
+	for _, animId in ipairs(lines) do
+		local clean = extractanimationid(animId)
+		local numeric = tonumber(clean)
+		if not numeric then continue end
+
+		local ok, obj = pcall(function()
+			return game:GetObjects("rbxassetid://" .. clean)[1]
+		end)
+		if not ok or not obj or not obj:IsA("KeyframeSequence") then continue end
+
+		obj.Parent = containerFolder
+		local info = getAnimationInfo(numeric)
+		loganimation(info.Name, clean, "Imported")
+	end
+
+	local base = "AnimationExports"
+	local gameFolder = base .. "/" .. sanitize(gameName)
+	local kfFolder = gameFolder .. "/exported-keyframes"
+	ensureFolder(base)
+	ensureFolder(gameFolder)
+	ensureFolder(kfFolder)
+
+	local outputData
+	synsaveinstance({
+		Object = containerFolder,
+		Callback = function(data) outputData = data end,
+		__DEBUG_MODE = true,
+		mode = "full",
+        ReadMe = false,
+		SaveBytecode = false
+	})
+	if outputData then
+		writefile(kfFolder .. "/output.rbxm", outputData)
+	end
+end
+
+local function exportIDs()
+	local base="AnimationExports"
+	local gameFolder=base.."/"..sanitize(gameName)
+	ensureFolder(base)
+	ensureFolder(gameFolder)
+
+	local path = gameFolder.."/animation_ids.txt"
+	local out = {}
+	if isfile(path) then
+		for line in readfile(path):gmatch("[^\r\n]+") do
+			table.insert(out,line)
+		end
+	end
+
+	for id in pairs(loggedanimations) do
+		local clean = extractanimationid(id)
+		local info = getAnimationInfo(tonumber(clean))
+		table.insert(out,string.format('"%s" -- %s', clean, info.Name))
+	end
+	writefile(path, table.concat(out,"\n"))
+end
+
+local exportIDsBtn=makeExportOption("Export IDs",0)
+exportIDsBtn.MouseButton1Click:Connect(function() clik() exportdropdown.Visible=false exportIDs() end)
+local exportKFBtn=makeExportOption("Export Keyframes",30)
+exportKFBtn.MouseButton1Click:Connect(function() clik() exportdropdown.Visible=false exportKeyframes() end)
 
 local function animateImportFrame(frame)
 	frame.Visible = true
@@ -385,6 +498,11 @@ doImportBtn.Font = Enum.Font.RobotoMono
 doImportBtn.TextSize = 14
 doImportBtn.Text = "Import Keyframes"
 doImportBtn.Parent = importFrame
+
+doImportBtn.MouseButton1Click:Connect(function()
+	clik()
+	importKeyframesFromText(importBox.Text)
+end)
 
 importbutton.MouseButton1Click:Connect(function()
 	clik()
